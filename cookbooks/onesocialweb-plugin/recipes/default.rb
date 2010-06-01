@@ -14,6 +14,11 @@ execute "extract-plugin" do
   not_if "test -f /vagrant/osw-openfire-plugin-0.6.0/osw-openfire-plugin.jar" 
 end
 
+# Ensure that mechanize is installed
+package "libxslt1-dev"
+package "libxml2-dev"
+gem_package "mechanize"
+
 # Run the install_plugin.rb script
 execute "install_plugin.rb" do
   command "ruby /vagrant/install_plugin.rb /vagrant/osw-openfire-plugin-0.6.0/osw-openfire-plugin.jar"

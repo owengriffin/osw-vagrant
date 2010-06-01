@@ -28,25 +28,54 @@ execute "install-openfire" do
 end
 
 service "openfire" do
-  supports :restart => true, :start => true
-  action [ :start ]
+  supports :start => true, :stop => true
+  action [ :stop ]
 end
 
-# Ensure that mechanize is installed
-package "libxslt1-dev"
-package "libxml2-dev"
-gem_package "mechanize"
+# Install the MySQL database
+include_recipe "mysql::server"
+Gem.clear_paths
+require 'mysql'
 
-# Run the setup_openfire.rb script
-execute "setup_openfire.rb" do
-  command "ruby /vagrant/setup_openfire.rb"
-  user "root"
-  action :run
+execute "create #{node[:openfire][:db][:database]} database" do
+  command "/usr/bin/mysqladmin -u root -p#{node[:mysql][:server_root_password]} create #{node[:openfire][:db][:database]}"
+  not_if do
+    m = Mysql.new("localhost", "root", @node[:mysql][:server_root_password])
+    m.list_dbs.include?(@node[:openfire][:db][:database])
+  end
+end
+
+execute "create mysql user #{@node[:openfire][:db][:user]}" do
+  command "echo \"GRANT ALL PRIVILEGES ON *.* TO '#{node[:openfire][:db][:user]}'@'localhost' IDENTIFIED BY '#{@node[:openfire][:db][:password]}';GRANT ALL PRIVILEGES ON *.* TO '#{node[:openfire][:db][:user]}'@'%' IDENTIFIED BY '#{@node[:openfire][:db][:password]}'; flush privileges;\" | /usr/bin/mysql -u root -p#{node[:mysql][:server_root_password]}"
+  not_if do
+    m = Mysql.new("localhost", "root", @node[:mysql][:server_root_password])
+    st = m.prepare("select User from mysql.user")
+    st.execute
+    st.fetch.include?(@node[:openfire][:db][:user])
+  end
+end
+
+execute "import database dump" do
+  command "/usr/bin/mysql -u root -p#{node[:mysql][:server_root_password]} #{node[:openfire][:db][:database]}< /vagrant/openfire.sql ; touch /vagrant/dump.complete"
+  not_if "test -f /vagrant/dump.complete"
+end
+
+# Write the openfire configuration file
+template "/etc/openfire/openfire.xml" do
+  source "openfire.xml.erb"
+  owner "openfire"
+  group "openfire"
+  variables({ :admin_port => 9090, :secure_port => 9091, :locale => "en"})
 end
 
 service "openfire" do
-  supports :restart => true, :start => true
-  action [ :restart ]
+  supports :start => true, :stop => true
+  action [ :stop ]
+end
+
+service "openfire" do
+  supports :start => true, :stop => true
+  action [ :start ]
 end
 
 script "wait-for-start" do
@@ -55,32 +84,4 @@ script "wait-for-start" do
   code <<-EOH
 sleep 90
 EOH
-end
-
-# Restart the openfire server
-service "openfire" do
-  supports :restart => true, :start => true, :stop => true
-  action [ :stop ]
-end
-
-script "wait-for-start" do
-  interpreter "ruby"
-  user "root"
-  code <<-EOH
-sleep 20
-EOH
-end
-
-script "overwrite-admin-password" do
-  interpreter "bash"
-  user "root"
-  code <<-EOH
- cat /usr/share/openfire/embedded-db/openfire.script
- echo "INSERT INTO OFUSER VALUES('admin','admin',NULL, 'Administrator','admin','0','0');" >> /usr/share/openfire/embedded-db/openfire.script
- EOH
-end
-
-service "openfire" do
-  supports :restart => true, :start => true
-  action [ :start ]
 end
