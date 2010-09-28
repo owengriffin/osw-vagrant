@@ -1,7 +1,10 @@
 Vagrant::Config.run do |config|
   config.vm.box = "base"
   config.vm.provisioner = :chef_solo
-  config.chef.cookbooks_path = ["cookbooks"]
+  config.chef.cookbooks_path = ["opscode-cookbooks", "cookbooks"]
+  config.chef.run_list.clear  
+  config.chef.add_recipe("onesocialweb-plugin")
+
   config.vm.forward_port("web", 80, 4567)
   config.vm.forward_port("openfire_admin", 9090, 9090)
   config.vm.forward_port("openfire_xmpp", 7070, 7070)

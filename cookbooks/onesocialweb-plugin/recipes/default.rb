@@ -1,4 +1,9 @@
 
+include_recipe "apt"
+include_recipe "mysql::client"
+include_recipe "mysql::server"
+include_recipe "openfire"
+
 # Download the openfire plugin if it does not already exist
 remote_file "/vagrant/osw-openfire-plugin-0.6.0.tgz" do
   source "http://github.com/downloads/onesocialweb/osw-openfire-plugin/osw-openfire-plugin-0.6.0.tgz"

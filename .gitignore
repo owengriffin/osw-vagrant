@@ -3,5 +3,6 @@
 bin/
 *~
 openfire_3.6.4_all.deb
-osw-openfire-plugin-0.6.0.tgz
+osw-openfire-plugin*
 .vagrant
+opscode-cookbooks

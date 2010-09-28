@@ -14,6 +14,10 @@ You then need to install a 'base' system. This is an image of a virtual machine 
     
 This will install an Ubuntu Hardy LTS virtual machine.
 
+You also need to checkout the latest copy of my fork of Opscode's Chef recipes:
+
+    $ git clone git@github.com:owengriffin/cookbooks.git
+
 From within the source folder you now need to start the virtual machine. This is done using the `vagrant up` command. You should see _lots_ of output from this command.
 
     $ vagrant up

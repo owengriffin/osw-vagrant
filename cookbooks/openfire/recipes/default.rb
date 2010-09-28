@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+include_recipe "java_sun"
+
 # Automatically accept the Sun Java licence
 script "accept-java-licence" do
   interpreter "bash"
@@ -11,8 +13,6 @@ echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true | /usr/bin/debconf-s
 echo sun-java6-jre shared/accepted-sun-dlj-v1-1 select true | /usr/bin/debconf-set-selections
 EOH
 end
-
-package "sun-java6-jdk"
 
 # Download the latest OpenFire server
 remote_file "/vagrant/openfire_3.6.4_all.deb" do
